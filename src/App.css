@@ -1,0 +1,101 @@
+.app {
+  padding: 32px 24px 64px;
+}
+
+.app section + section {
+  margin-top: 40px;
+}
+
+.item-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-title {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.item-category {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--code-bg);
+}
+
+.item-notes {
+  margin: 0;
+  font-size: 15px;
+}
+
+.item-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.item-meta em {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.item-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-progress input[type='range'] {
+  flex: 1;
+}
+
+.item button {
+  align-self: flex-start;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.badge-done {
+  opacity: 0.6;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.empty {
+  opacity: 0.6;
+  font-size: 15px;
+}
