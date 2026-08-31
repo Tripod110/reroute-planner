@@ -37,10 +37,12 @@ git config user.name "Tripod110"
 git config user.email "smasher8976@gmail.com"
 ```
 
-## 5. Once the app is scaffolded (not yet — see STATUS.md)
-Once `package.json` exists, the usual commands will apply:
+## 5. Install and run
 
 ```bash
 npm install
-npm run dev
+npm run dev      # dev server, http://localhost:5173
+npm run test     # unit tests (vitest)
+npm run lint     # oxlint
+npm run build    # production build
 ```
