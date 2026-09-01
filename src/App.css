@@ -1,34 +1,122 @@
+/* ============================================================
+   WAYPOINT — component styles
+   ------------------------------------------------------------
+   Tokens live in index.css. Read the rule at the top of that
+   file before adding colour here.
+
+   DESIGN NOTE — the display face:
+   --display resolves to Bahnschrift on Windows (a DIN, i.e. the
+   German road-signage typeface this direction is built on) and
+   falls back to Franklin Gothic / Arial Narrow elsewhere. The
+   signage character survives the fallback; the condensed width
+   is less pronounced. font-stretch only does anything on the
+   variable Bahnschrift, and is harmlessly ignored otherwise.
+   ============================================================ */
+
 .app {
-  padding: 32px 24px 64px;
+  padding: 30px 28px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
 }
 
-.app section + section {
-  margin-top: 40px;
+/* --- masthead ------------------------------------------------ */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 3px solid var(--border-hard);
+  padding-bottom: 14px;
 }
+
+.topbar-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+/* --- status strip -------------------------------------------- */
+/* Summary before detail: four derived counts, read-only. The
+   "needs reroute" cell is the only one allowed to go orange,
+   and only when the count is non-zero (see .stat-alert). */
+
+.status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border-hard);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-right: 1px solid var(--border);
+}
+
+.stat:last-child {
+  border-right: 0;
+}
+
+.stat-num {
+  font-family: var(--display);
+  font-stretch: 87.5%;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-family: var(--display);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
+.stat-alert .stat-num {
+  color: var(--accent);
+}
+
+/* --- items --------------------------------------------------- */
 
 .item-list {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .item {
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
   padding: 14px 16px;
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
+}
+
+/* A reroute suggestion is the one thing in the app actively
+   asking for a decision — the only item that wears the signal. */
+.item-reroute {
+  border: 1px solid var(--accent);
+  border-top: 4px solid var(--accent);
+  background: var(--accent-bg);
 }
 
 .item-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  flex-wrap: wrap;
 }
 
 .item-title {
@@ -36,14 +124,22 @@
   color: var(--text-h);
 }
 
+/* Category = route line. Identity, not status. */
 .item-category {
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--code-bg);
+  letter-spacing: 0.09em;
+  padding: 4px 0 3px;
+  border-bottom: 2px solid var(--cat, var(--border));
+  color: var(--text);
 }
+
+[data-cat='school'] { --cat: var(--cat-school); }
+[data-cat='work'] { --cat: var(--cat-work); }
+[data-cat='gym'] { --cat: var(--cat-gym); }
+[data-cat='other'] { --cat: var(--cat-other); }
 
 .item-notes {
   margin: 0;
@@ -52,13 +148,20 @@
 
 .item-meta {
   display: flex;
-  gap: 16px;
-  font-size: 14px;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
 }
 
 .item-meta em {
   font-style: normal;
-  opacity: 0.75;
+  opacity: 0.7;
+}
+
+.item-cadence b {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text-h);
 }
 
 .item-progress {
@@ -69,24 +172,55 @@
 
 .item-progress input[type='range'] {
   flex: 1;
+  min-width: 0;
+}
+
+.item-percent {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-h);
 }
 
 .item button {
   align-self: flex-start;
 }
 
+/* --- badges --------------------------------------------------- */
+/* Filled = the system telling you something. Outlined = a state
+   you already know about. */
+
 .badge {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
+  font-family: var(--display);
+  font-stretch: 87.5%;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.badge-reroute { background: var(--accent); }
+.badge-near-done { background: var(--ok); }
+.badge-due { background: var(--warn); }
+.badge-overdue { background: var(--crit); }
+
+/* Stalled is quiet on purpose: it is information, not an alarm.
+   Nothing in this app punishes you for a gap. */
+.badge-stalled,
+.badge-done {
+  background: transparent;
   color: var(--text-h);
+  border-color: var(--border-hard);
 }
 
 .badge-done {
   opacity: 0.6;
 }
+
+/* --- controls -------------------------------------------------- */
 
 .toggle {
   display: inline-flex;
@@ -96,71 +230,140 @@
 }
 
 .empty {
-  opacity: 0.6;
+  opacity: 0.7;
   font-size: 15px;
 }
 
 .section-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* .app and section are flex columns, so a bare button child would
+   stretch to full width. Buttons sit at their natural size. */
+.app > button,
+section > button,
+.item-meta > button {
+  align-self: flex-start;
 }
 
 .view-toggle {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .view-toggle button {
-  background: transparent;
-  font-size: 13px;
-  padding: 4px 10px;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  padding: 7px 12px;
 }
 
 .view-toggle button.active {
-  background: var(--accent-bg);
+  background: var(--border-hard);
+  border-color: var(--border-hard);
+  color: var(--bg);
 }
+
+/* --- the route (calendar) --------------------------------------- */
+/* The week reads as one continuous route rather than seven
+   separate cards: a single ruled block, a line threading the
+   days, a node on each. Today's node and its segment are live. */
 
 .calendar {
   display: grid;
-  grid-template-columns: repeat(7, minmax(130px, 1fr));
-  gap: 8px;
-  margin-top: 12px;
+  grid-template-columns: repeat(7, minmax(132px, 1fr));
   overflow-x: auto;
+  border: 1px solid var(--border-hard);
 }
 
 .calendar-day {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  min-height: 130px;
+  background: var(--surface);
+  padding: 26px 11px 12px;
+  min-height: 150px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   text-align: left;
+  position: relative;
+}
+
+.calendar-day + .calendar-day {
+  border-left: 1px solid var(--border);
+}
+
+.calendar-day::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  border-top: 2px solid var(--border);
+}
+
+.calendar-day::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  width: 10px;
+  height: 10px;
+  background: var(--surface);
+  border: 2px solid var(--border-hard);
 }
 
 .calendar-day-today {
-  border-color: var(--accent-border);
   background: var(--accent-bg);
+}
+
+.calendar-day-today::before {
+  border-color: var(--accent);
+}
+
+.calendar-day-today::after {
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .calendar-day-label {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+}
+
+.calendar-dow {
+  font-family: var(--display);
+  font-stretch: 87.5%;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--text-h);
 }
 
+.calendar-date {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
 .calendar-today-tag {
-  font-size: 11px;
-  font-weight: 400;
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.7;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin-top: 3px;
 }
 
 .calendar-items {
@@ -176,42 +379,67 @@
 .calendar-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   font-size: 13px;
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-top: 3px solid var(--cat, var(--border));
+  padding: 7px 8px;
 }
 
 .calendar-item button {
   align-self: flex-start;
-  padding: 2px 8px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+/* A Canvas assignment is not yours to reschedule the way a habit
+   is. The dashed stroke marks that borrowed status. */
+.calendar-item-assignment {
+  border-top-style: dashed;
+}
+
+.calendar-item a {
+  color: var(--text-h);
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+.calendar-item a:hover {
+  text-decoration-color: var(--accent);
 }
 
 .calendar-empty {
-  opacity: 0.4;
+  opacity: 0.45;
   font-size: 12px;
 }
+
+/* --- forms ------------------------------------------------------ */
 
 .add-form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed var(--border);
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .add-form input[type='text'],
+.add-form input[type='number'],
 .add-form select {
   font: inherit;
-  padding: 6px 10px;
-  border-radius: 4px;
+  font-size: 14.5px;
+  padding: 8px 11px;
+  border-radius: 0;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text-h);
+}
+
+.add-form input::placeholder {
+  color: var(--text);
+  opacity: 0.7;
 }
 
 .add-form input[type='text'] {
@@ -227,11 +455,92 @@
 }
 
 .add-form-inline input[type='number'] {
-  font: inherit;
-  width: 48px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  width: 54px;
+}
+
+/* --- progress slider --------------------------------------------- */
+/* --fill is set inline from completionPercent so the filled
+   portion of the track matches the number beside it. */
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 22px;
+  margin: 0;
+  cursor: grab;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--border-hard) var(--fill, 0%),
+    var(--border) var(--fill, 0%)
+  );
+}
+
+input[type='range']::-moz-range-track {
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--border-hard) var(--fill, 0%),
+    var(--border) var(--fill, 0%)
+  );
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: var(--border-hard);
+  border: 2px solid var(--surface);
+  margin-top: -4px;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: var(--border-hard);
+  border: 2px solid var(--surface);
+}
+
+input[type='range']:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* --- assistant ---------------------------------------------------- */
+
+.msg-user {
   background: var(--bg);
-  color: var(--text-h);
+  border-style: dashed;
+}
+
+/* --- narrow ------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .app {
+    padding: 20px 16px 44px;
+    gap: 26px;
+  }
+
+  .status-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat:nth-child(2) {
+    border-right: 0;
+  }
+
+  .stat:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .add-form input[type='text'] {
+    flex: 1 1 100%;
+  }
 }

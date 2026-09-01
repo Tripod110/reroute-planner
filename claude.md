@@ -39,4 +39,6 @@ never reach the client.
 ## Scope
 Two entity types: recurring **Habits** (school/work/gym, cadence-based,
 reroute-on-miss) and standalone **Projects** (started/not-finished or
-close-to-done, tracked via a completion-% field, not recurring).
+close-to-done, tracked via a completion-% field, not recurring). A third
+source, **Courses**, is synced live from Canvas (Rowan University) rather
+than stored/created manually — see `DATA-MODEL.md` and `CANVAS-SETUP.md`.

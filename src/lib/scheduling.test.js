@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getDueDate, getWeekDays, groupHabitsByDay } from './scheduling'
+import { getDueDate, getWeekDays, groupAssignmentsByDay, groupHabitsByDay } from './scheduling'
 
 function daysAgo(n) {
   const d = new Date()
@@ -117,6 +117,39 @@ describe('groupHabitsByDay', () => {
     const a = makeHabit({ id: 'a', lastCompletedAt: null })
     const b = makeHabit({ id: 'b', lastCompletedAt: null })
     const buckets = groupHabitsByDay([a, b], days)
+    expect(buckets.get(days[0].getTime())).toEqual([a, b])
+  })
+})
+
+describe('groupAssignmentsByDay', () => {
+  function makeAssignment(overrides) {
+    return { id: 'a1', name: 'Assessment 1', dueAt: daysAgo(-2).toISOString(), ...overrides }
+  }
+
+  it('buckets an assignment onto the day its dueAt falls on', () => {
+    const days = getWeekDays(new Date(), 7)
+    const assignment = makeAssignment({ dueAt: daysAgo(-2).toISOString() })
+    const buckets = groupAssignmentsByDay([assignment], days)
+    expect(buckets.get(days[2].getTime())).toContainEqual(assignment)
+  })
+
+  it('does not clamp an assignment outside the window — it is just absent', () => {
+    // Unlike habits, a missed assignment isn't "always due" — Canvas
+    // itself already filters to upcoming, so this only covers an
+    // assignment due after the visible window.
+    const days = getWeekDays(new Date(), 7)
+    const farFuture = makeAssignment({ dueAt: daysAgo(-30).toISOString() })
+    const buckets = groupAssignmentsByDay([farFuture], days)
+    for (const day of days) {
+      expect(buckets.get(day.getTime())).not.toContainEqual(farFuture)
+    }
+  })
+
+  it('buckets multiple assignments due the same day together', () => {
+    const days = getWeekDays(new Date(), 7)
+    const a = makeAssignment({ id: 'a', dueAt: daysAgo(0).toISOString() })
+    const b = makeAssignment({ id: 'b', dueAt: daysAgo(0).toISOString() })
+    const buckets = groupAssignmentsByDay([a, b], days)
     expect(buckets.get(days[0].getTime())).toEqual([a, b])
   })
 })

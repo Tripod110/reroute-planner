@@ -5,7 +5,7 @@
 // instead of disappearing, which is what actually implements "missing a
 // cycle never resets to zero" visually.
 
-function startOfDay(date) {
+export function startOfDay(date) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
   return d
@@ -42,5 +42,20 @@ export function groupHabitsByDay(habits, days) {
     buckets.get(due.getTime())?.push(habit)
   })
 
+  return buckets
+}
+
+// Assignments have a hard due date from Canvas, unlike habits — no
+// cadence math, and no clamping an overdue one onto today. Canvas is
+// queried with bucket=upcoming (see server/canvasClient.js), so overdue
+// assignments won't reach this function in practice; one that's outside
+// the visible window (before or after) is simply not shown here, not
+// dropped from Canvas.
+export function groupAssignmentsByDay(assignments, days) {
+  const buckets = new Map(days.map((d) => [d.getTime(), []]))
+  assignments.forEach((assignment) => {
+    const due = startOfDay(new Date(assignment.dueAt))
+    buckets.get(due.getTime())?.push(assignment)
+  })
   return buckets
 }

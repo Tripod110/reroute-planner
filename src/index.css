@@ -1,22 +1,56 @@
+/* ============================================================
+   WAYPOINT — global tokens and base elements
+   ------------------------------------------------------------
+   Direction: highway / transit signage.
+
+   The governing rule is COLOUR MEANS DEVIATION. Anything on
+   route is quiet ink on paper. --accent (signal orange) is
+   reserved for things that have drifted, are overdue, or are
+   asking you to make a decision. If you find yourself reaching
+   for --accent to make something look nice, use --border-hard
+   instead — the moment orange becomes decoration, it stops
+   working as a signal.
+
+   Category colours (--cat-*) are route-line colours. They
+   identify which line a thing belongs to; they never indicate
+   status. Status is --ok / --warn / --crit.
+   ============================================================ */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* ground + ink */
+  --bg: #edefea;          /* cool grey-green paper, deliberately not cream */
+  --surface: #ffffff;     /* cards, day cells */
+  --text: #565e5c;
+  --text-h: #14171a;
+  --border: #cbd1c9;      /* hairlines */
+  --border-hard: #14171a; /* structural rules, primary buttons */
+  --code-bg: #e3e6df;
+
+  /* signal — deviation only */
+  --accent: #e8500f;
+  --accent-bg: #fceee7;
+  --accent-border: #e8500f;
+
+  /* status */
+  --ok: #2f7d5b;
+  --warn: #b8720a;
+  --crit: #c0392b;
+
+  /* route lines — identity, never status */
+  --cat-school: #1b4fd8;
+  --cat-work: #7a3ea8;
+  --cat-gym: #2f7d5b;
+  --cat-other: #78716c;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Bahnschrift is Windows' DIN — the road-signage face this
+     direction is built on. Falls back to other condensed
+     grotesques elsewhere; see DESIGN-NOTES in App.css. */
+  --display: Bahnschrift, 'DIN Alternate', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif;
+  --heading: var(--display);
+  --mono: ui-monospace, Consolas, 'SF Mono', monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  font: 17px/1.5 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -26,27 +60,32 @@
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 1024px) {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    --bg: #16191f;
+    --surface: #1e2320;
+    --text: #a0a8a3;
+    --text-h: #f0f2ee;
+    --border: #343a37;
+    --border-hard: #6d7a73;
+    --code-bg: #262b28;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --accent: #ff7a45;
+    --accent-bg: #33211a;
+    --accent-border: #ff7a45;
+
+    --ok: #5fb98d;
+    --warn: #d9a03c;
+    --crit: #e0705f;
+
+    --cat-school: #6d95ff;
+    --cat-work: #b083d6;
+    --cat-gym: #5fb98d;
+    --cat-other: #a8a29e;
   }
 }
 
@@ -67,54 +106,100 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 500;
+  font-family: var(--display);
+  font-stretch: 87.5%;
   color: var(--text-h);
+  text-wrap: balance;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
   @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+    font-size: 23px;
   }
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  margin: 0;
 }
+
 p {
   margin: 0;
 }
 
 code {
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 0.82em;
   line-height: 135%;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 3px 6px;
   color: var(--text-h);
   background: var(--code-bg);
 }
 
+/* Signage buttons: condensed, uppercase, square. The bare element is
+   the SECONDARY treatment because most buttons in this app are
+   secondary (check off, dismiss, sign out). Submit buttons and
+   .primary get the filled ink treatment. */
 button {
-  font: inherit;
+  font-family: var(--display);
+  font-stretch: 87.5%;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
   cursor: pointer;
-  border-radius: 4px;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: transparent;
   color: var(--text-h);
-  padding: 6px 12px;
+  padding: 8px 14px;
+  transition: background 0.13s, border-color 0.13s, color 0.13s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--border-hard);
+  background: var(--surface);
+}
+
+button[type='submit'],
+button.primary {
+  background: var(--border-hard);
+  border-color: var(--border-hard);
+  color: var(--bg);
+}
+
+button[type='submit']:hover:not(:disabled),
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 button:disabled {
   cursor: default;
   opacity: 0.5;
+}
+
+:where(a, button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

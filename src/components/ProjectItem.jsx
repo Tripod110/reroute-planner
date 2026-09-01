@@ -1,25 +1,21 @@
-import { NEAR_DONE_PERCENT, STALLED_AFTER_DAYS } from '../config/thresholds'
-
-function daysSince(date) {
-  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24))
-}
+import { daysSince, isNearDone, isStalled } from '../lib/summary'
 
 // Status badges are derived from completionPercent + lastTouchedAt, never
 // stored (see DATA-MODEL.md) — "near done" and "stalled" are two
-// independent signals, not stages of one status.
+// independent signals, not stages of one status. The predicates live in
+// summary.js so the status strip and this badge agree by construction.
 function ProjectItem({ project, onUpdatePercent, onTouch }) {
   const since = daysSince(project.lastTouchedAt)
-  const nearDone = !project.completedAt && project.completionPercent >= NEAR_DONE_PERCENT
-  const stalled =
-    !project.completedAt &&
-    project.completionPercent < NEAR_DONE_PERCENT &&
-    since >= STALLED_AFTER_DAYS
+  const nearDone = isNearDone(project)
+  const stalled = isStalled(project)
 
   return (
-    <li className="item">
+    <li className="item" data-cat={project.category}>
       <div className="item-main">
         <span className="item-title">{project.title}</span>
-        <span className="item-category">{project.category}</span>
+        <span className="item-category" data-cat={project.category}>
+          {project.category}
+        </span>
         {project.completedAt && <span className="badge badge-done">Done</span>}
         {nearDone && <span className="badge badge-near-done">Near done</span>}
         {stalled && <span className="badge badge-stalled">Stalled</span>}
@@ -35,9 +31,12 @@ function ProjectItem({ project, onUpdatePercent, onTouch }) {
           max="100"
           value={project.completionPercent}
           disabled={!!project.completedAt}
+          // Drives the filled portion of the track so it matches the
+          // number beside it (see input[type='range'] in App.css).
+          style={{ '--fill': `${project.completionPercent}%` }}
           onChange={(e) => onUpdatePercent(project.id, Number(e.target.value))}
         />
-        <span>{project.completionPercent}%</span>
+        <span className="item-percent">{project.completionPercent}%</span>
       </div>
       {!project.completedAt && (
         <button type="button" onClick={() => onTouch(project.id)}>

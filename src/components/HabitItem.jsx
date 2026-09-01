@@ -11,14 +11,17 @@ function HabitItem({ habit, onCheckOff }) {
   const drifted = habit.currentCadenceDays !== habit.targetEveryDays
 
   return (
-    <li className="item">
+    <li className="item" data-cat={habit.category}>
       <div className="item-main">
         <span className="item-title">{habit.title}</span>
-        <span className="item-category">{habit.category}</span>
+        <span className="item-category" data-cat={habit.category}>
+          {habit.category}
+        </span>
+        {drifted && <span className="badge badge-reroute">Drifted</span>}
       </div>
       <div className="item-meta">
-        <span>
-          Every {habit.currentCadenceDays}d
+        <span className="item-cadence">
+          Every <b>{habit.currentCadenceDays}d</b>
           {drifted && <em> (target: {habit.targetEveryDays}d)</em>}
         </span>
         <span>{since === null ? 'Never done' : `${since}d since last`}</span>

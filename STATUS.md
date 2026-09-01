@@ -1,6 +1,6 @@
 # Status
 
-Last updated: 2026-08-31
+Last updated: 2026-09-02
 
 ## Where things stand
 - Repo created and public: https://github.com/Tripod110/reroute-planner
@@ -62,13 +62,146 @@ Last updated: 2026-08-31
   same-day/out-of-window bucketing. This is QA on existing logic, not new
   app scope — didn't touch components or the data model.
 
+- **Canvas integration (2026-09-01):** new third entity, **Courses**,
+  synced live from Rowan's Canvas (`rowan.instructure.com`) instead of
+  stored in Firestore — see `DATA-MODEL.md` "Courses (from Canvas)" for
+  why it doesn't fit Habits or Projects. `server/` is a minimal Express
+  proxy holding the Canvas personal-access-token server-side (mirrors
+  the "keys never reach the client" rule `claude.md` sets for AI calls);
+  Vite dev-proxies `/api` to it so the browser never talks to Canvas
+  directly. `CoursesView.jsx` adds a manual "Sync from Canvas" button
+  showing each active course's upcoming assignments with due-date
+  badges (overdue / due today / due soon). Setup steps in
+  `CANVAS-SETUP.md`. Not yet run/verified in-browser — this dev machine
+  doesn't have Node.js installed, so `npm install` / `npm run dev` /
+  `npm run server` are still untested; do that first before trusting
+  this works end-to-end.
+
+- **Firebase Auth + Firestore wired (2026-09-02):** Google sign-in
+  (`src/lib/auth.js`, `SignIn.jsx`) and real Firestore persistence
+  (`src/lib/firestoreData.js`) replace the mock-data state that
+  `App.jsx` used to hold — `src/data/mockData.js` deleted, no longer
+  referenced. Firestore Timestamps converted to JS `Date` on every read
+  so existing components (`ProjectItem`, `scheduling.js`) didn't need
+  changes. Security rules in `firestore.rules` lock each user to their
+  own `users/{uid}` subtree; pasted into Firebase console manually (no
+  CLI deploy set up). Firebase web config lives in `.env`
+  (`VITE_FIREBASE_*`) — not secret, but gitignored anyway for
+  cleanliness. Writes now surface failures in the UI (a `dbError`
+  banner in `App.jsx`) instead of failing silently — this caught a real
+  bug: the first attempt to add a habit failed silently because the
+  rules hadn't been published yet in the console. **Verified in-browser
+  end to end:** signed in with Google, added a habit, checked it off,
+  confirmed the write persisted (not just local state).
+
+- **Tests for firestoreData.js (2026-09-02):** 12 tests in
+  `src/lib/firestoreData.test.js`, mocking the Firebase SDK (no emulator)
+  — covers the Timestamp-to-Date conversion, write payloads (habit
+  cadence defaults, project 0%-start, `completedAt` set only at 100%),
+  and confirms `onError` is actually forwarded to `onSnapshot`, which is
+  the exact wiring gap that caused the silent add-habit failure earlier
+  this session. `fromFirestore` exported from `firestoreData.js`
+  specifically to make this testable. 23/23 tests passing, lint clean.
+
+- **Canvas assignments merged into CalendarView (2026-09-02):** the
+  weekly grid now shows Canvas due dates alongside Habits, not just in
+  the separate Courses section. `scheduling.js` gained
+  `groupAssignmentsByDay` — deliberately simpler than the habit
+  bucketing: real due dates need no cadence math, and (unlike a missed
+  habit) an assignment outside the visible window is just absent, not
+  clamped onto today — "never resets to zero" is a habit-specific rule,
+  not a general one. Canvas sync state moved from `CoursesView` up into
+  `App.jsx` so both `CoursesView` and `CalendarView` can read the same
+  synced data; `flattenAssignments` (`canvasApi.js`) turns the nested
+  per-course response into one list, scoping ids by course to avoid key
+  collisions. Assignment items get a purple left border in the grid to
+  read as visually distinct from habits (no check-off button — Canvas
+  data is read-only here). 6 new tests (29 total), lint clean, build
+  clean. Not yet visually confirmed in-browser — asked the user to check.
+
+- **AI reasoning layer v1 (2026-09-02):** `src/lib/reroute.js` —
+  deterministic rules, no external model call (user chose Gemini over
+  Claude for cost reasons if/when this becomes LLM-backed; v1 doesn't need
+  either). `suggestHabitReroute` flags a habit once it's overdue by a full
+  extra cadence cycle (not just "due today") and proposes relaxing
+  `currentCadenceDays` by one `targetEveryDays`-sized step — gradual, and
+  never below the current cadence, matching "resumes at the last
+  comfortable cadence" rather than an arbitrary jump.
+  `RerouteSuggestions.jsx` surfaces these above the Habits section with
+  Accept/Dismiss — nothing is written automatically (claude.md: "suggests,
+  does not silently reschedule"). Accept calls the one write this layer is
+  allowed to make, `applyRerouteCadence` (`currentCadenceDays` only, never
+  `targetEveryDays`). Dismiss is session-only (no persistence — full
+  dismiss-tracking is a later scope decision, not snuck in here). Project
+  stalled/near-done resume candidates were already surfaced via badges in
+  step 3, so v1 scope is habits only. 8 new tests for the reroute rules + 1
+  for `applyRerouteCadence` (38 total), lint clean, build clean. Not yet
+  visually confirmed in-browser (same tooling gap as before).
+
+- **Gemini-backed assistant (2026-09-02):** the reasoning layer got a
+  second half — v1 was deterministic rules only, but the actual product
+  vision (confirmed with the user) is a real personal assistant that helps
+  with scheduling conflicts and project management, which date-math rules
+  can't do. `server/geminiClient.js` proxies the Gemini REST API
+  (`gemini-2.5-flash-lite` — cheapest current tier, matches the user's
+  stated reason for choosing Gemini over Claude) with the key server-side
+  only, same shape as the Canvas proxy. `src/lib/assistantContext.js`
+  builds a compact snapshot (active habits, open projects, upcoming
+  Canvas assignments) sent fresh on every message — not baked into
+  conversation history, so it stays current as data changes mid-chat.
+  `AssistantPanel.jsx` is a chat UI plus a "Today's briefing" quick-action
+  (canned prompt asking for scheduling conflicts + priorities + a stalled
+  project's next action) — same endpoint, no separate suggestion
+  infrastructure. The assistant has no tools and no Firestore write
+  access, so "suggests, doesn't decide" holds structurally, not just by
+  prompt instruction. `GEMINI_API_KEY`/`GEMINI_MODEL` added to `.env` (key
+  left blank — user has one but pastes it directly into the file, not
+  chat, per the Canvas-token lesson from earlier this session). 4 new
+  tests for the context builder (42 total), lint clean, build clean.
+  **Verified end-to-end with a real key and a real Gemini response**
+  (2026-09-02): the intended default model, `gemini-2.5-flash-lite`, had
+  been retired for new users since this was scoped — Google's 404 named
+  the replacement directly (`gemini-3.5-flash-lite`), confirmed against
+  the live API rather than guessed. Swapped the default in
+  `geminiClient.js` and `.env`(.example); a follow-up POST to
+  `/api/assistant` returned a real, on-topic reply. **Confirmed working
+  through the actual chat UI** the same day: "Today's briefing" correctly
+  flagged the 5-assignment cluster due 2026-09-08 for INTRO EVOL/SCI
+  INQ-RS-1 from live Canvas data, referenced the real "Shower" habit by
+  name, and correctly reported no active projects rather than inventing
+  one. Task #6 done end to end.
+
+- **Persistent, inferred assistant memory (2026-09-02, task #8):** the
+  Gemini assistant now genuinely remembers the user across sessions,
+  building on the 2026-09-02 scoping conversation (persistent, pattern-
+  based, inferred not explicit, LLM-layer only). Two prerequisite gaps
+  got closed first: `checkOffHabit` now writes a real `completions`
+  history entry alongside the habit doc (previously only overwrote a
+  single `lastCompletedAt` timestamp), and reroute-suggestion accept/
+  dismiss decisions are now persisted (`recordRerouteDecision`) instead
+  of session-only. A new `users/{uid}/assistantMemory/summary` doc holds
+  one evolving plain-text profile, read into every assistant call and
+  updated automatically after each exchange via a dedicated Gemini call
+  (`generateMemoryUpdate`, `server/geminiClient.js` — a separate prompt
+  from the main reply, whose only job is maintaining a concise, under-
+  200-word summary). Memory writes are automatic rather than suggest/
+  confirm — a deliberate call, since it only changes what the assistant
+  remembers, not real plan data — but stays visible and clearable in the
+  Assistant panel ("Show what the assistant knows about you") so it's
+  never a silent black box. Scoped to the LLM layer only, per the user's
+  choice — the deterministic reroute engine (`src/lib/reroute.js`)
+  doesn't read it. 3 new tests (61 total), lint clean, build clean.
+  Landed concurrently with the UI/design pass (task #7) running in a
+  parallel session on the same working tree — no collisions, verified
+  after each shared-file overlap.
+
 ## Build order (from claude.md)
-1. **Scaffold + auth** — scaffold done, auth not started
+1. **Scaffold + auth** — done (Google sign-in via Firebase Auth)
 2. Data model — done (`DATA-MODEL.md`)
-3. **Rendering + check-off** — UI done against mock data, now includes a
-   calendar view; real Firestore wiring blocked on step 1 (auth/Firebase
-   project)
-4. AI reasoning layer — not started (last)
+3. **Rendering + check-off** — done against real Firestore data, includes
+   a calendar view
+4. **AI reasoning layer** — v1 done (deterministic rules); LLM-backed
+   phrasing/reasoning would be a future upgrade, not required
 
 ## Scope decision — Projects tracking (2026-08-30)
 Added a second entity type alongside recurring Habits: **Projects** — things
@@ -85,14 +218,23 @@ habits, so they don't fit the existing model.
 Schema/fields not decided yet — that's step 2, mine to write.
 
 ## Next step
-Wire up Firebase Auth (Google sign-in). Nothing has been decided yet about
-Firebase project setup (new project vs. existing, billing, hosting choice)
-— that's a decision for when we resume, not something to pick unattended.
-Nothing else in the app is blocked on it, so further unattended polish
-(responsive layout, small UX gaps, more mock-data coverage) is fair game
-in the meantime — but the Firebase/auth decision itself waits.
+Core build order (1-3) is functionally done and verified. What's left
+before calling the app "done" as a daily driver, roughly in order:
+1. Regression coverage for the Firestore data layer — `scheduling.js`
+   has tests, `firestoreData.js` doesn't (no tests touched Firebase
+   yet).
+2. Hosting — not chosen (Firebase Hosting is the default fit, not
+   confirmed) — app currently only runs via `npm run dev` + `npm run
+   server` locally.
+3. PWA/mobile-installable — named as a stack goal in `claude.md`, never
+   actually implemented (manifest, service worker, icons).
+4. Step 4, AI reasoning layer — last on purpose, not started.
 
 ## Open decisions / not yet chosen
-- Firebase project not created yet.
-- No hosting target chosen yet (Firebase Hosting is the default fit given
-  the stack, but not confirmed).
+- No hosting target chosen yet.
+- Canvas sync is manual (button click) — whether it should become
+  automatic/scheduled, and whether synced course data should get cached
+  in Firestore, aren't decided.
+- Canvas token was pasted into chat during setup — should be revoked and
+  regenerated at canvas.rowan.edu/profile/settings when convenient, then
+  swapped into `.env`.
