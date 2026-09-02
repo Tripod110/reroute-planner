@@ -200,8 +200,11 @@ Last updated: 2026-09-02
 2. Data model — done (`DATA-MODEL.md`)
 3. **Rendering + check-off** — done against real Firestore data, includes
    a calendar view
-4. **AI reasoning layer** — v1 done (deterministic rules); LLM-backed
-   phrasing/reasoning would be a future upgrade, not required
+4. **AI reasoning layer** — done. v1 is deterministic rules
+   (`src/lib/reroute.js`); on top of that, a Gemini-backed assistant
+   (chat + "Today's briefing" + persistent inferred memory) is also live
+   — see the 2026-09-02 entries above. All four build-order steps are
+   functionally complete as of commit `ec5f272`.
 
 ## Scope decision — Projects tracking (2026-08-30)
 Added a second entity type alongside recurring Habits: **Projects** — things
@@ -217,24 +220,45 @@ habits, so they don't fit the existing model.
   as habit reroutes.
 Schema/fields not decided yet — that's step 2, mine to write.
 
-## Next step
-Core build order (1-3) is functionally done and verified. What's left
-before calling the app "done" as a daily driver, roughly in order:
-1. Regression coverage for the Firestore data layer — `scheduling.js`
-   has tests, `firestoreData.js` doesn't (no tests touched Firebase
-   yet).
-2. Hosting — not chosen (Firebase Hosting is the default fit, not
-   confirmed) — app currently only runs via `npm run dev` + `npm run
-   server` locally.
-3. PWA/mobile-installable — named as a stack goal in `claude.md`, never
-   actually implemented (manifest, service worker, icons).
-4. Step 4, AI reasoning layer — last on purpose, not started.
+## Resume here (last updated 2026-09-02, commit `ec5f272`, pushed to
+`origin/master`)
+
+All four build-order steps above are functionally done. Working tree was
+clean at last push — `git pull` first if this session's checkout might
+be behind (multiple sessions have been editing this repo concurrently:
+one doing functionality, one doing the "Waypoint" visual redesign, both
+merged cleanly into the same commit).
+
+**Open task list** (tracked in-conversation, not in any repo file, so
+re-stating it here for continuity):
+
+| # | Task | Status |
+|---|---|---|
+| 4 | Make the app PWA-installable | pending |
+| 5 | Choose and set up hosting/deploy | pending |
+| 7 | UI/design pass ("Waypoint" system) | code is committed and looks substantially complete (see `src/App.css`, `StatusStrip.jsx`, `badge-reroute`/`data-cat` styling) — confirm with the user whether it's considered done or still being iterated on before assuming so |
+| 9 | Add read-only GitHub integration + optional `repoUrl` on Projects | pending — see `DATA-MODEL.md`/`STATUS.md` 2026-09-02 scoping notes for the agreed shape (fine-grained read-only PAT, same server-proxy pattern as `server/canvasClient.js`) |
+| 10 | Project completion suggestion engine (GitHub signal + chat inference, suggest-and-confirm UI) | pending, blocked on #9 |
+| 11 | Habit check-off suggestion engine (chat inference only, no external signal) | pending, independent of #9/#10 |
+
+Recommended order discussed with the user: finish/confirm #7 (design),
+then #4 → #5 (mechanical polish, PWA icons should reflect the final
+design), then #9 → #10, with #11 buildable any time.
+
+**Per-machine setup this session's `.env` doesn't travel with git**
+(gitignored, correctly). A fresh machine/session needs its own `.env`
+populated per `CANVAS-SETUP.md` and `.env.example`: `CANVAS_TOKEN`,
+Firebase web config (`VITE_FIREBASE_*`), `GEMINI_API_KEY` +
+`GEMINI_MODEL=gemini-3.5-flash-lite` (not `gemini-2.5-flash-lite` —
+Google retired that tier for new users mid-build, confirmed against the
+live API). Two tokens were pasted into chat during setup (Canvas,
+Gemini) and should be rotated when convenient — not urgent, just
+hygiene, noted here so it isn't forgotten across sessions.
 
 ## Open decisions / not yet chosen
 - No hosting target chosen yet.
 - Canvas sync is manual (button click) — whether it should become
   automatic/scheduled, and whether synced course data should get cached
   in Firestore, aren't decided.
-- Canvas token was pasted into chat during setup — should be revoked and
-  regenerated at canvas.rowan.edu/profile/settings when convenient, then
-  swapped into `.env`.
+- Whether task #7 (design) is actually finished or still in progress —
+  ask the user before starting #4/#5, which are sequenced to come after it.
